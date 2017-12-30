@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">ImageWithText</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="requiredFieldError">This field is required</string>
+    <string name="txt_countinue">Countinue</string>
+
+    <string name="txt_read_permission_title">Storage Permission</string>
+    <string name="txt_read_permission">This permission is required. Please give Storage Permisssion</string>
+
+    <string name="txt_camera_permission_title">Camera</string>
+    <string name="txt_camera_permission">This permission is required.Please give Camera permission</string>
+    <string name="title_activity_main2">Main2Activity</string>
+</resources>
