@@ -9,10 +9,12 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Toast
 import com.theta.imagewithtext.Global.Companion.createImageFile
@@ -22,7 +24,12 @@ import java.io.FileOutputStream
 import java.io.IOException
 
 
-class MainActivity : BaseActivity(), MyDialogFragment.EditDialogListener {
+
+
+
+
+class MainActivity : BaseActivity(), MyDialogFragment.EditDialogListener, View.OnTouchListener, View.OnClickListener {
+
 
 
     private val REQUEST_GALLERY_PHOTO = 0
@@ -37,16 +44,77 @@ class MainActivity : BaseActivity(), MyDialogFragment.EditDialogListener {
     private lateinit var f: File
     private var mCurrentPhotoPath: String? = null
 
+    var dX: Float = 0.toFloat()
+    var dY: Float = 0.toFloat()
+
+    //--------------------- for image move-----------------
+    private var xCoOrdinate: Float = 0.toFloat()
+    private var yCoOrdinate: Float = 0.toFloat()
+
+    //--------------------- for textview zoom in/out -------
+    internal val STEP = 200f
+    internal var mRatio = 1.0f
+    internal var mBaseDist: Int = 0
+    internal var mBaseRatio: Float = 0.toFloat()
+    internal var fontsize = 13f
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         init()
         checkPermisiion()
+        /*btnsave.setOnClickListener(View.OnClickListener {
+            Log.e("msg", "btn click")
+            val bm = Global.getBitmapFromView(layout)
+            SaveImage(bm)
+        })*/
+        btnsave.setOnClickListener(this)
     }
 
     private fun init() {
+        tvMarquee.isSelected = true
+        textView.setTextSize(mRatio + 40)
+      //  textView.setZoomLimit(6.0f)
+      //  ivImage.setOnTouchListener(this)
+    }
 
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (event.pointerCount == 2) {
+            // zoom in/out of textview
+            val action = event.action
+            val pureaction = action and MotionEvent.ACTION_MASK
+            if (pureaction == MotionEvent.ACTION_POINTER_DOWN) {
+                mBaseDist = getDistance(event)
+                mBaseRatio = mRatio
+            } else {
+                val delta = (getDistance(event) - mBaseDist) / STEP
+                val multi = Math.pow(2.0, delta.toDouble()).toFloat()
+                mRatio = Math.min(1024.0f, Math.max(0.1f, mBaseRatio * multi))
+                textView.setTextSize(mRatio + 30)
+            }
+        }else{
+            // move textview
+            when (event!!.getAction()) {
+                MotionEvent.ACTION_DOWN -> {
+                    dX = textView!!.getX() - event.getRawX()
+                    dY = textView.getY() - event.getRawY()
+                }
+                MotionEvent.ACTION_MOVE ->
+                    textView!!.animate()
+                            .x(event.getRawX() + dX)
+                            .y(event.getRawY() + dY)
+                            .setDuration(0)
+                            .start()
+                else -> return false
+            }
+        }
+        return true
+    }
+
+    internal fun getDistance(event: MotionEvent): Int {
+        val dx = (event.getX(0) - event.getX(1)).toInt()
+        val dy = (event.getY(0) - event.getY(1)).toInt()
+        return Math.sqrt((dx * dx + dy * dy).toDouble()).toInt()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -54,7 +122,18 @@ class MainActivity : BaseActivity(), MyDialogFragment.EditDialogListener {
         return true;
     }
 
+    override fun onClick(view: View?) {
+        if (view!!.id == btnsave.id){
+            Log.e("msg", "btn click")
+            val bm = Global.getBitmapFromView(layout)
+            textView.visibility = View.INVISIBLE
+            ivImage.setImageBitmap(bm)
+            SaveImage(bm)
+        }
+    }
+
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        btnsave.visibility = View.GONE
         when (item?.itemId) {
             R.id.menuCamera -> {
                 val cameraIntent = Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE)
@@ -142,8 +221,15 @@ class MainActivity : BaseActivity(), MyDialogFragment.EditDialogListener {
         Log.e("text", imgText)
         textView.setText(imgText)
         textView.visibility = View.VISIBLE
-        val bm = Global.getBitmapFromView(layout)
-        SaveImage(bm)
+        textView.setOnTouchListener(this)
+        var snackbar: Snackbar = Snackbar.make(textView, "You can move the position of textview.", Snackbar.LENGTH_INDEFINITE)
+        snackbar.setAction("OK", View.OnClickListener {
+            snackbar.dismiss()
+            btnsave.visibility = View.VISIBLE
+        })
+        snackbar.show()
+        //  val bm = Global.getBitmapFromView(layout)
+        // SaveImage(bm)
     }
 
     private fun SaveImage(bitmapImage: Bitmap?) {
@@ -186,5 +272,48 @@ class MainActivity : BaseActivity(), MyDialogFragment.EditDialogListener {
         return f
     }
 
+    override fun onTouch(view: View?, event: MotionEvent?): Boolean {
+        /*
+        // move textview
+        if (view!!.id == textView.id){
+            when (event!!.getAction()) {
+                MotionEvent.ACTION_DOWN -> {
+                    dX = view!!.getX() - event.getRawX()
+                    dY = view.getY() - event.getRawY()
+                }
+                MotionEvent.ACTION_MOVE ->
+                    view!!.animate()
+                            .x(event.getRawX() + dX)
+                            .y(event.getRawY() + dY)
+                            .setDuration(0)
+                            .start()
+                else -> return false
+            }
+
+        }*/
+
+        /*
+        // move img
+        if (view!!.id == ivImage.id){
+            when (event!!.getActionMasked()) {
+                MotionEvent.ACTION_DOWN -> {
+                    xCoOrdinate = view.x - event.getRawX()
+                    yCoOrdinate = view.y - event.getRawY()
+                }
+                MotionEvent.ACTION_MOVE ->
+                    view.animate()
+                            .x(event.getRawX() + xCoOrdinate)
+                            .y(event.getRawY() + yCoOrdinate)
+                            .setDuration(0)
+                            .start()
+                else -> return false
+            }
+            return true
+        }*/
+       return false
+    }
+
+
 
 }
+

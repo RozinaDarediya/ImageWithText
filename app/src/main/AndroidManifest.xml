@@ -21,9 +21,10 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".Main2Activity"
+            android:name=".ZoomTextView.Main2Activity"
             android:label="@string/title_activity_main2"
             android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".Activity.Main3Activity"></activity>
     </application>
 
 </manifest>
